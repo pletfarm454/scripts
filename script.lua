@@ -322,7 +322,7 @@ PlayerTab:CreateToggle({
 -- ⚙ SettingsTab
 SettingsTab:CreateParagraph({
 	Title = "Info",
-	Content = "Script made by @plet_farmyt\nRayfield UI + ESP + Features"
+	Content = "Script made by @plet_farmyt"
 })
 
 task.spawn(function()
