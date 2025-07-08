@@ -214,6 +214,21 @@ local function drawESP()
     end)
 end
 
+-- Новый таск для обновления ESP каждый N секунд
+local espUpdateTask = nil
+
+local function startESPUpdateLoop()
+    if espUpdateTask then return end
+    espUpdateTask = task.spawn(function()
+        while espEnabled do
+            drawESP()
+            task.wait(1) -- обновлять раз в секунду
+        end
+        clearESP()
+        espUpdateTask = nil
+    end)
+end
+
 local Window = Rayfield:CreateWindow({
     Name = "Game Hub",
     LoadingTitle = "Loading...",
@@ -226,7 +241,7 @@ local MainTab     = Window:CreateTab("Main", 4483362458)
 local ItemsTab    = Window:CreateTab("Items", 4483362361)
 local ESPTab      = Window:CreateTab("ESP", 4483362457)
 local PlayerTab   = Window:CreateTab("Player", 4483362006)
-local EmoteTab    = Window:CreateTab("Emote", 4483363000) -- Новая вкладка Emote
+local EmoteTab    = Window:CreateTab("Emote", 4483363000)
 local SettingsTab = Window:CreateTab("Settings", 4483362706)
 
 -- 📌 MainTab
@@ -265,7 +280,11 @@ ESPTab:CreateToggle({
     CurrentValue = false,
     Callback = function(state)
         espEnabled = state
-        if state then drawESP() else clearESP() end
+        if state then
+            startESPUpdateLoop()
+        else
+            clearESP()
+        end
     end,
 })
 
@@ -320,7 +339,7 @@ PlayerTab:CreateToggle({
     end,
 })
 
--- 🎭 EmoteTab (новая вкладка с кнопкой)
+-- 🎭 EmoteTab
 EmoteTab:CreateButton({
     Name = "Show Emote 3 Page",
     Callback = function()
