@@ -339,12 +339,9 @@ PlayerTab:CreateToggle({
     end,
 })
 
--- === FOV Loop и слайдер ===
+-- === FOV Loop + TextBox (50-360) ===
 local fovLoopEnabled = false
-local fovValue = 70  -- стандартное значение FOV
-local fovMin = 70
-local fovMax = 120
-local fovStep = 1
+local fovValue = 70 -- стандартное
 
 PlayerTab:CreateToggle({
     Name = "FOV Loop",
@@ -354,36 +351,31 @@ PlayerTab:CreateToggle({
     end,
 })
 
-PlayerTab:CreateSlider({
-    Name = "FOV",
-    Range = {70, 120},
-    Increment = 1,
-    CurrentValue = 70,
-    Callback = function(val)
-        fovValue = val
-        if not fovLoopEnabled then
-            camera.FieldOfView = fovValue
+PlayerTab:CreateTextBox({
+    Name = "FOV Value (50-360)",
+    PlaceholderText = tostring(fovValue),
+    Text = tostring(fovValue),
+    MaxLength = 3,
+    ClearTextOnFocus = false,
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 50 and num <= 360 then
+            fovValue = num
+            if not fovLoopEnabled then
+                camera.FieldOfView = fovValue
+            end
+        else
+            return tostring(fovValue)
         end
     end,
 })
 
 task.spawn(function()
-    local direction = 1
     while true do
         if fovLoopEnabled then
-            fovValue = fovValue + direction * fovStep
-            if fovValue >= fovMax then
-                fovValue = fovMax
-                direction = -1
-            elseif fovValue <= fovMin then
-                fovValue = fovMin
-                direction = 1
-            end
-            camera.FieldOfView = fovValue
-        else
             camera.FieldOfView = fovValue
         end
-        task.wait(0.03)
+        task.wait(0.1)
     end
 end)
 
