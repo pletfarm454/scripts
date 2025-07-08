@@ -339,6 +339,54 @@ PlayerTab:CreateToggle({
     end,
 })
 
+-- === FOV Loop и слайдер ===
+local fovLoopEnabled = false
+local fovValue = 70  -- стандартное значение FOV
+local fovMin = 70
+local fovMax = 120
+local fovStep = 1
+
+PlayerTab:CreateToggle({
+    Name = "FOV Loop",
+    CurrentValue = false,
+    Callback = function(state)
+        fovLoopEnabled = state
+    end,
+})
+
+PlayerTab:CreateSlider({
+    Name = "FOV",
+    Range = {70, 120},
+    Increment = 1,
+    CurrentValue = 70,
+    Callback = function(val)
+        fovValue = val
+        if not fovLoopEnabled then
+            camera.FieldOfView = fovValue
+        end
+    end,
+})
+
+task.spawn(function()
+    local direction = 1
+    while true do
+        if fovLoopEnabled then
+            fovValue = fovValue + direction * fovStep
+            if fovValue >= fovMax then
+                fovValue = fovMax
+                direction = -1
+            elseif fovValue <= fovMin then
+                fovValue = fovMin
+                direction = 1
+            end
+            camera.FieldOfView = fovValue
+        else
+            camera.FieldOfView = fovValue
+        end
+        task.wait(0.03)
+    end
+end)
+
 -- 🎭 EmoteTab
 EmoteTab:CreateButton({
     Name = "Show Emote 3 Page",
