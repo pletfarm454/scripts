@@ -153,81 +153,78 @@ local function drawESP()
     beamFolder = Instance.new("Folder", workspace)
     beamFolder.Name = "BeamESPFolder"
 
-    local function addESP(part, type)
-        local box = createESPBox(part)
-        if box then
-            table.insert(espObjects, {part = part, box = box, type = type})
-        end
-    end
+    local function addESP(part, type)  
+        local box = createESPBox(part)  
+        if box then  
+            table.insert(espObjects, {part = part, box = box, type = type})  
+        end  
+    end  
 
-    local puzzlesFolder = workspace:FindFirstChild("Puzzle") and workspace.Puzzle:FindFirstChild("Puzzles")
-    if puzzlesFolder then
-        for _, model in ipairs(puzzlesFolder:GetDescendants()) do
-            if model:IsA("Model") then
-                local part = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
-                if part then addESP(part, "Puzzle") end
-            end
-        end
-    end
+    local puzzlesFolder = workspace:FindFirstChild("Puzzle") and workspace.Puzzle:FindFirstChild("Puzzles")  
+    if puzzlesFolder then  
+        for _, model in ipairs(puzzlesFolder:GetDescendants()) do  
+            if model:IsA("Model") then  
+                local part = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")  
+                if part then addESP(part, "Puzzle") end  
+            end  
+        end  
+    end  
 
-    local npcs = workspace:FindFirstChild("NPCS")
-    if npcs then
-        for _, model in ipairs(npcs:GetChildren()) do
-            if model:IsA("Model") then
-                local part = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
-                if part then addESP(part, "NPC") end
-            end
-        end
-    end
+    local npcs = workspace:FindFirstChild("NPCS")  
+    if npcs then  
+        for _, model in ipairs(npcs:GetChildren()) do  
+            if model:IsA("Model") then  
+                local part = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")  
+                if part then addESP(part, "NPC") end  
+            end  
+        end  
+    end  
 
-    local elevators = workspace:FindFirstChild("Elevators")
-    if elevators then
-        local level0 = elevators:FindFirstChild("Level0Elevator")
-        if level0 then
-            for _, part in ipairs(level0:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    addESP(part, "Elevator")
-                end
-            end
-        end
-    end
+    local elevators = workspace:FindFirstChild("Elevators")  
+    if elevators then  
+        local level0 = elevators:FindFirstChild("Level0Elevator")  
+        if level0 then  
+            for _, part in ipairs(level0:GetDescendants()) do  
+                if part:IsA("BasePart") then  
+                    addESP(part, "Elevator")  
+                end  
+            end  
+        end  
+    end  
 
-    RunService:BindToRenderStep("ESPUpdate", 301, function()
-        for i = #espObjects, 1, -1 do
-            local obj = espObjects[i]
-            local part, box = obj.part, obj.box
-            if part and part.Parent and box then
-                box.Adornee = part
-                box.Size = part.Size
-                box.Transparency = 0.5
-                box.Color3 = (
-                    obj.type == "Puzzle" and puzzleColor or
-                    obj.type == "NPC" and npcColor or
-                    obj.type == "Elevator" and elevatorColor or
-                    Color3.new(1,1,1)
-                )
-            else
-                box:Destroy()
-                table.remove(espObjects, i)
-            end
-        end
+    RunService:BindToRenderStep("ESPUpdate", 301, function()  
+        for i = #espObjects, 1, -1 do  
+            local obj = espObjects[i]  
+            local part, box = obj.part, obj.box  
+            if part and part.Parent and box then  
+                box.Adornee = part  
+                box.Size = part.Size  
+                box.Transparency = 0.5  
+                box.Color3 = (  
+                    obj.type == "Puzzle" and puzzleColor or  
+                    obj.type == "NPC" and npcColor or  
+                    obj.type == "Elevator" and elevatorColor or  
+                    Color3.new(1,1,1)  
+                )  
+            else  
+                box:Destroy()  
+                table.remove(espObjects, i)  
+            end  
+        end  
     end)
 end
 
--- Новый таск для обновления ESP каждый N секунд
-local espUpdateTask = nil
-
-local function startESPUpdateLoop()
-    if espUpdateTask then return end
-    espUpdateTask = task.spawn(function()
-        while espEnabled do
+-- Постоянный цикл обновления ESP (раз в секунду)  
+task.spawn(function()
+    while true do
+        if espEnabled then
             drawESP()
-            task.wait(1) -- обновлять раз в секунду
+        else
+            clearESP()
         end
-        clearESP()
-        espUpdateTask = nil
-    end)
-end
+        task.wait(1)
+    end
+end)
 
 local Window = Rayfield:CreateWindow({
     Name = "Game Hub",
@@ -280,11 +277,6 @@ ESPTab:CreateToggle({
     CurrentValue = false,
     Callback = function(state)
         espEnabled = state
-        if state then
-            startESPUpdateLoop()
-        else
-            clearESP()
-        end
     end,
 })
 
@@ -338,46 +330,6 @@ PlayerTab:CreateToggle({
         godmodeEnabled = state
     end,
 })
-
--- === FOV Loop + TextBox (50-360) ===
-local fovLoopEnabled = false
-local fovValue = 70 -- стандартное
-
-PlayerTab:CreateToggle({
-    Name = "FOV Loop",
-    CurrentValue = false,
-    Callback = function(state)
-        fovLoopEnabled = state
-    end,
-})
-
-PlayerTab:CreateTextBox({
-    Name = "FOV Value (50-360)",
-    PlaceholderText = tostring(fovValue),
-    Text = tostring(fovValue),
-    MaxLength = 3,
-    ClearTextOnFocus = false,
-    Callback = function(text)
-        local num = tonumber(text)
-        if num and num >= 50 and num <= 360 then
-            fovValue = num
-            if not fovLoopEnabled then
-                camera.FieldOfView = fovValue
-            end
-        else
-            return tostring(fovValue)
-        end
-    end,
-})
-
-task.spawn(function()
-    while true do
-        if fovLoopEnabled then
-            camera.FieldOfView = fovValue
-        end
-        task.wait(0.1)
-    end
-end)
 
 -- 🎭 EmoteTab
 EmoteTab:CreateButton({
